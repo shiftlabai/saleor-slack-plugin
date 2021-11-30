@@ -1,9 +1,9 @@
 import json
-from typing import Any
+from typing import Any, Union
 from urllib import request
 
 from django.core.exceptions import ValidationError
-from saleor.account.models import User
+from saleor.account.models import Address, User
 from saleor.plugins.base_plugin import BasePlugin, ConfigurationTypeField
 from saleor.plugins.models import PluginConfiguration
 
@@ -35,12 +35,20 @@ class SlackPlugin(BasePlugin):
             error_msg = f"To enable this plugin, please provide values for the following fields: {', '.join(missing_fields)}"
             raise ValidationError(error_msg)
 
+    def change_user_address(
+        self,
+        address: Address,
+        address_type: Union[str, None],
+        user: Union[User, None],
+        previous_value: Address,
+    ) -> Address:
+        if self.active and user:
+            self.post_to_slack(
+                message=f"{user.first_name} {user.last_name} ({user.email}) updated their address"
+            )
 
-    def customer_updated(self, user: User, previous_value: Any) -> Any:
-        if self.active:
-            self.post_to_slack(message=f"User {user.first_name} {user.last_name} ({user.email}) updated their details!")
-        return previous_value
-
+        # Should we return address or previous_value here? It's not clear.
+        return address
 
     def post_to_slack(self, message: str):
         """
@@ -48,14 +56,12 @@ class SlackPlugin(BasePlugin):
         configuration value, using Slack's Incoming Webhook API
         (https://api.slack.com/messaging/webhooks)
         """
-        configuration = {
-            item["name"]: item["value"] for item in self.configuration
-        }
+        configuration = {item["name"]: item["value"] for item in self.configuration}
         if not configuration["webhook_url"]:
             return
 
         url = configuration["webhook_url"]
-        data = json.dumps({"text": message}).encode('utf-8')
+        data = json.dumps({"text": message}).encode("utf-8")
         req = request.Request(url, data)
-        req.add_header('Content-Type', 'application/json')
+        req.add_header("Content-Type", "application/json")
         request.urlopen(req)
