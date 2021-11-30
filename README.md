@@ -1,6 +1,6 @@
 # Saleor Slack Plugin
 
-A simple Saleor plugin that posts to a specific Slack channel via a Slack webhook in response to certain events in Saleor.
+A simple [Saleor plugin](https://docs.saleor.io/docs/3.0/developer/extending/plugins) that posts to a specific Slack channel via a Slack webhook in response to certain events in Saleor.
 
 NB: this plugin imports from the `saleor` package, so if you open it in e.g. VS Code you might see import errors. So far I've got round that by just working in the same virtualenv I use when hacking on `saleor`.
 
